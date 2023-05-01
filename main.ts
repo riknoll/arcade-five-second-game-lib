@@ -8,8 +8,9 @@ namespace GameJam {
     let _verb: string;
     let _isGameOver: boolean;
     let _didTheySucceed: boolean;
-    let _isTemplate: boolean;
-    let registeredGames: RegisteredGame[] = [];
+    let _isTemplate = true;
+    let registeredGames: RegisteredGame[];
+    let font: image.Font;
 
     class RegisteredGame {
         constructor(public verb: string, public main: () => void) { }
@@ -21,6 +22,11 @@ namespace GameJam {
         Lost,
     }
 
+    /**
+     * Sets the mini game win state. If set to true,
+     * then the player won the game. If set to false, then
+     * the player lost and will have to try again
+     */
     //% blockId=gamejam_gameover
     //% block="set mini game win state $success"
     //% weight=90
@@ -29,6 +35,9 @@ namespace GameJam {
         _didTheySucceed = success;
     }
 
+    /**
+     * Returns true if the mini game win state has been set to true
+     */
     //% blockId=gamejam_didTheySucceed
     //% block="did they win?"
     //% weight=60
@@ -36,24 +45,46 @@ namespace GameJam {
         return !!(_didTheySucceed);
     }
 
-    //% blockId=gamejam_isMiniGameOver
-    //% block="is mini game over?"
-    //% weight=70
     export function isMiniGameOver(): boolean {
         return !!(_isGameOver);
     }
 
+    /**
+     * Returns the number of milliseonds left in the game
+     */
     //% blockId=gamejam_millisRemaining
     //% block="milliseconds remaining in game"
     //% weight=80
     export function millisRemaining(): number {
-        return TOTAL_TIME - (control.millis() - _startTime);
+        return TOTAL_TIME - (game.runtime() - _startTime);
     }
 
-    //% blockId=gamejam_startMiniGame
+    /**
+     * Starts the minigame. The verb passed will be displayed at the
+     * beginning of the game.
+     */
+    //% blockId=gamejam_setMiniGameVerb
     //% block="start mini game with verb $verb"
     //% weight=100
+    export function start(verb: string) {
+        _verb = verb;
+
+        // We want this to run after all the user events (e.g. button events) have been registered
+        setTimeout(() => {
+            startMiniGame(verb)
+        }, 0)
+    }
+
     export function startMiniGame(verb: string) {
+        init();
+        game.pushScene()
+        const r = scene.createRenderable(0xfffffe, screen => {
+            screen.fill(12);
+            screen.printCenter(verb, 60 - (font.charHeight >> 1), 1, font)
+        })
+        pause(1000);
+        game.popScene()
+        r.destroy();
         _startTime = game.runtime();
         _verb = verb;
         settings.writeNumber("resetState", ResetState.Playing)
@@ -73,7 +104,7 @@ namespace GameJam {
                 game.pushScene();
 
                 const result = _didTheySucceed
-                const font = image.doubledFont(image.font8);
+                
                 game.onShade(() => {
                     screen.fill(result ? 6 : 12)
                     screen.printCenter(result ? "SUCCESS" : "TRY AGAIN", 60 - (font.charHeight >> 1), 1, font)
@@ -86,8 +117,10 @@ namespace GameJam {
         }, TOTAL_TIME);
     }
 
-    export function init(isTemplate: boolean) {
-        _isTemplate = isTemplate
+    export function init() {
+        _isTemplate = true
+        font = image.doubledFont(image.font8);
+        registeredGames = [];
         const state = settings.readNumber("resetState") || ResetState.Playing;
         let gameIndex = settings.readNumber("gameIndex") || 0;
 
@@ -231,5 +264,3 @@ a a a a a a
         })
     }
 }
-
-GameJam.init(true);

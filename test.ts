@@ -1,1 +1,1 @@
-GameJam.startMiniGame("Dash")
+GameJam.start("Run")
