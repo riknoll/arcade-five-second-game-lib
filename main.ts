@@ -8,6 +8,7 @@ namespace GameJam {
     let _verb: string;
     let _isGameOver: boolean;
     let _didTheySucceed: boolean;
+    let _isTemplate: boolean;
     let registeredGames: RegisteredGame[] = [];
 
     class RegisteredGame {
@@ -66,11 +67,27 @@ namespace GameJam {
             else {
                 settings.writeNumber("resetState", ResetState.Lost)
             }
+
+            if (_isTemplate) {
+                game.popScene();
+                game.pushScene();
+
+                const result = _didTheySucceed
+                const font = image.doubledFont(image.font8);
+                game.onShade(() => {
+                    screen.fill(result ? 6 : 12)
+                    screen.printCenter(result ? "SUCCESS" : "TRY AGAIN", 60 - (font.charHeight >> 1), 1, font)
+                })
+
+                pause(1000);
+            }
+
             game.reset();
         }, TOTAL_TIME);
     }
 
-    export function init() {
+    export function init(isTemplate: boolean) {
+        _isTemplate = isTemplate
         const state = settings.readNumber("resetState") || ResetState.Playing;
         let gameIndex = settings.readNumber("gameIndex") || 0;
 
@@ -215,4 +232,4 @@ a a a a a a
     }
 }
 
-GameJam.init();
+GameJam.init(true);
